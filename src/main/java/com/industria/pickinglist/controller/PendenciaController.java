@@ -2,13 +2,11 @@ package com.industria.pickinglist.controller;
 
 import com.industria.pickinglist.model.Pendencia;
 import com.industria.pickinglist.service.PickingService;
-import org.springframework.ui.Model;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -21,31 +19,33 @@ public class PendenciaController {
 
     @GetMapping("/pendencias")
     public String index(@RequestParam(required = false) String busca, Model model) {
-
-        // Usa o novo método de serviço que já trata a busca
+        // 1. Busca os dados filtrados ou todos
         List<Pendencia> listaAberta = service.buscarPendenciasAbertas(busca);
 
-        // Agrupa por OP
+        // 2. Agrupa por OP para o Accordion
         Map<String, List<Pendencia>> mapaPorOp = listaAberta.stream()
                 .collect(Collectors.groupingBy(Pendencia::getOp));
 
         model.addAttribute("pendenciasMap", mapaPorOp);
         model.addAttribute("entregues", service.getHistoricoEntregas());
-        model.addAttribute("busca", busca); // Para manter o texto no input
-
+        model.addAttribute("busca", busca);
         return "pendencias";
     }
 
+    // FIXED: Now accepts qtdEntregue parameter
     @PostMapping("/pendencias/entregar")
-    public String entregar(@RequestParam Long id) {
-        service.realizarEntrega(id);
+    public String entregar(@RequestParam Long id,
+                           @RequestParam(required = false) Double qtdEntregue,
+                           RedirectAttributes redirect) {
+        service.realizarEntrega(id, qtdEntregue);
+        redirect.addFlashAttribute("message", "Entrega registrada com sucesso!");
         return "redirect:/pendencias";
     }
 
-    // --- NOVO: EXCLUIR OP COMPLETA ---
     @PostMapping("/pendencias/excluir-op")
-    public String excluirOp(@RequestParam String op) {
+    public String excluirOp(@RequestParam String op, RedirectAttributes redirect) {
         service.excluirPendenciasDaOp(op);
+        redirect.addFlashAttribute("message", "OP removida do backlog!");
         return "redirect:/pendencias";
     }
 }

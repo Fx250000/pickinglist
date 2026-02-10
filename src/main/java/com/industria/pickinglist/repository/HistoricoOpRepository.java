@@ -7,4 +7,6 @@ import java.util.List;
 public interface HistoricoOpRepository extends JpaRepository<HistoricoOp, Long> {
     // Ordena do mais recente para o mais antigo
     List<HistoricoOp> findAllByOrderByDataFinalizacaoDesc();
+
+
 }

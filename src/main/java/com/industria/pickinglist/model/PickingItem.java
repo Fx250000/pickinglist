@@ -12,15 +12,13 @@ public class PickingItem {
     private String descricao;
     private String local;
     private String unidade;
-    private Double qtdRequerida; // O que o Excel pediu
-    private Double qtdSeparada = 0.0; // O que você digitou ou marcou
+    private Double qtdRequerida; // O que pediu
+    private Double qtdSeparada = 0.0; // O que encontrou
 
-    // Controle
     private boolean isPai;
     private String status; // "PENDENTE", "PARCIAL", "OK"
     private String zona;
 
-    // Campos Kit
     private String parentId;
     private String codigoPai;
     private List<String> childrenIds = new ArrayList<>();
@@ -32,11 +30,12 @@ public class PickingItem {
 
     public void atualizarStatus() {
         if (qtdSeparada == null) qtdSeparada = 0.0;
+        if (qtdRequerida == null) qtdRequerida = 0.0;
 
-        // Tolerância para ponto flutuante (0.001)
+        // Tolerância para ponto flutuante
         if (qtdSeparada >= (qtdRequerida - 0.001)) {
             this.status = "OK";
-            this.qtdSeparada = this.qtdRequerida; // Trava no máximo
+            this.qtdSeparada = this.qtdRequerida; // Trava no teto
         } else if (qtdSeparada > 0.001) {
             this.status = "PARCIAL";
         } else {
@@ -45,19 +44,9 @@ public class PickingItem {
         }
     }
 
-    // --- CORREÇÃO CRÍTICA AQUI ---
-    // Este método calcula o que vai para o relatório de faltas
     public Double getSaldoDevedor() {
         if (qtdSeparada == null) qtdSeparada = 0.0;
-        if (qtdRequerida == null) qtdRequerida = 0.0;
-
         double saldo = qtdRequerida - qtdSeparada;
-
-        // Se o saldo for negativo (separou a mais) ou muito perto de zero, retorna 0
-        if (saldo < 0.001) {
-            return 0.0;
-        }
-
-        return saldo;
+        return (saldo < 0.001) ? 0.0 : saldo;
     }
 }

@@ -415,6 +415,61 @@
             }
         } catch (e) { console.error(e); }
     }
+
+    // Função central de comunicação (AJAX)
+    async function enviarParaBackend(id, qtd) {
+        const row = document.getElementById('row-' + id);
+
+        row.style.opacity = '0.5';
+
+        try {
+            const formData = new FormData();
+            formData.append('id', id);
+            formData.append('qtd', qtd);
+
+            const response = await fetch('/api/update', { method: 'POST', body: formData });
+
+            if (response.ok) {
+                const data = await response.json();
+
+                // 1. Atualiza a linha do item clicado
+                updateRowVisual(id, data.status);
+
+                // 2. SE O BACKEND DISSER QUE O PAI MUDOU, TEMOS QUE RECARREGAR A PÁGINA OU ATUALIZAR O PAI
+                // Como não estamos retornando o ID do pai no JSON simples, uma recarga suave ou
+                // lógica de verificação seria ideal. Mas para simplificar:
+                // Se o item tem um pai (data-parent-id), vamos tentar recarregar a página APENAS SE
+                // quisermos ver o risco no pai imediatamente.
+                //
+                // MELHOR: Vamos apenas recarregar se for um item de kit, para garantir consistência visual do pai.
+                const parentId = row.getAttribute('data-parent-id');
+                if (parentId) {
+                    // Pequeno delay para garantir que o backend processou
+                    setTimeout(() => location.reload(), 100);
+                }
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            row.style.opacity = '1';
+        }
+    }
+
+    function updateRowVisual(id, status) {
+        const row = document.getElementById('row-' + id);
+        const btnIcon = document.querySelector(`#btn-check-${id} i`);
+
+        row.classList.remove('status-PENDENTE', 'status-PARCIAL', 'status-OK');
+        row.classList.add('status-' + status);
+
+        if (btnIcon) {
+            if (status === 'OK') {
+                btnIcon.className = 'bi bi-x-lg';
+            } else {
+                btnIcon.className = 'bi bi-check-lg';
+            }
+        }
+    }
 </script>
 </body>
 </html>
