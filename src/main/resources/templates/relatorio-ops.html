@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Histórico de Separação de OPs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+<body class="bg-light p-4">
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold"><i class="bi bi-clock-history"></i> Histórico de Separação</h3>
+            <span class="text-muted">Monitoramento de tempo de espera e eficiência por OP</span>
+        </div>
+        <a href="/" class="btn btn-outline-secondary">Voltar</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                <tr>
+                    <th>Data Separação</th>
+                    <th>Ordem (OP)</th>
+                    <th>Tempo Parado (Aguardando)</th>
+                    <th width="25%">Atendimento (%)</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="h : ${ops}">
+
+                    <td>
+                        <div class="fw-bold" th:text="${#temporals.format(h.dataFinalizacao, 'dd/MM/yyyy')}"></div>
+                        <small class="text-muted" th:text="${#temporals.format(h.dataFinalizacao, 'HH:mm')}"></small>
+                    </td>
+
+                    <td>
+                        <span class="badge bg-primary fs-6" th:text="${h.op}"></span>
+                    </td>
+
+                    <td>
+                        <div class="d-flex align-items-center text-secondary fw-bold">
+                            <i class="bi bi-hourglass-split me-2"></i>
+                            <span th:text="${h.tempoParado}"></span>
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="progress flex-grow-1 me-2" style="height: 20px;">
+                                <div class="progress-bar"
+                                     role="progressbar"
+                                     th:style="'width: ' + ${h.percentualAtendimento} + '%'"
+                                     th:classappend="${h.percentualAtendimento == 100} ? 'bg-success' : 'bg-warning'"
+                                     th:text="${#numbers.formatDecimal(h.percentualAtendimento, 1, 0)} + '%'">
+                                </div>
+                            </div>
+                        </div>
+                        <small class="text-muted"
+                               th:text="${#numbers.formatDecimal(h.itensAtendidos, 1, 0)} + ' de ' + ${#numbers.formatDecimal(h.totalItens, 1, 0)} + ' itens'">
+                        </small>
+                    </td>
+
+                    <td class="text-end">
+                        <a th:href="@{/pendencias(opFiltro=${h.op})}"
+                           class="btn btn-sm btn-outline-danger"
+                           th:if="${h.percentualAtendimento < 100}"
+                           title="Ver Pendências desta OP">
+                            <i class="bi bi-exclamation-circle-fill"></i> Ver Faltas
+                        </a>
+                        <span th:if="${h.percentualAtendimento == 100}" class="text-success fw-bold small">
+                            <i class="bi bi-check-all"></i> Completa
+                        </span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

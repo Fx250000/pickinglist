@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Picking List Live</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            --cor-fundo: #f8f9fa;
+            --cor-ok-bg: #e2e6ea;
+            --cor-ok-text: #adb5bd;
+            --cor-kit-btn: #4c46d6; /* Roxo vibrante */
+            --cor-almox: #0d6efd;
+            --cor-cd: #212529;
+        }
+
+        body {
+            background-color: var(--cor-fundo);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding-bottom: 100px; /* Espaço para a barra fixa inferior */
+        }
+
+        /* Remove setas do input number */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        /* Estilos de Status OK */
+        tr.status-OK {
+            background-color: var(--cor-ok-bg) !important;
+            color: var(--cor-ok-text) !important;
+            transition: all 0.3s ease;
+        }
+        tr.status-OK .desc-texto { text-decoration: line-through; }
+        tr.status-OK input, tr.status-OK button { opacity: 0.6; }
+        tr.status-OK input:focus { opacity: 1; background-color: white; }
+
+        tr.status-PARCIAL {
+            background-color: #fff3cd !important;
+            border-left: 5px solid #ffc107;
+        }
+
+        /* Cabeçalhos de Seção (Agora clicáveis) */
+        .section-header {
+            background-color: #343a40;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* Separa texto da seta */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer; /* Mãozinha ao passar o mouse */
+            transition: background-color 0.2s;
+        }
+        .section-header:hover {
+            background-color: #495057;
+        }
+
+        /* Badges */
+        .badge-almox { background-color: var(--cor-almox); }
+        .badge-cd { background-color: var(--cor-cd); }
+
+        /* Botão Kit */
+        .btn-kit {
+            background-color: var(--cor-kit-btn);
+            color: white;
+            font-weight: 700;
+            border: none;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-kit:hover { background-color: #3832a8; color: white; }
+
+        /* Input Quantidade */
+        .input-qtd {
+            width: 80px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="p-3">
+
+<div class="container bg-white p-4 rounded shadow-sm">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <div>
+            <div class="d-flex align-items-center gap-3">
+                <h3 class="m-0 fw-bold text-dark"><i class="bi bi-clipboard2-check"></i> Picking List</h3>
+                <span class="badge bg-primary fs-6 shadow-sm"
+                      th:if="${op != null and op != '---'}"
+                      th:text="'OP: ' + ${op}">
+                </span>
+            </div>
+            <span class="text-muted small">Gerenciamento de Separação e Logística</span>
+        </div>
+
+        <div class="d-flex gap-2 align-items-end">
+            <form action="/upload" method="post" enctype="multipart/form-data" class="d-flex gap-1">
+                <input type="file" name="file" class="form-control form-control-sm" style="width: 220px;" required>
+                <button class="btn btn-dark btn-sm">Carregar</button>
+            </form>
+
+            <a href="/pendencias" target="_blank" class="btn btn-outline-warning btn-sm fw-bold text-dark" title="Gerenciar Itens Pendentes">
+                <i class="bi bi-exclamation-triangle"></i> Pendências
+            </a>
+
+            <a href="/relatorio-ops" target="_blank" class="btn btn-outline-secondary btn-sm" title="Ver Histórico de Separações">
+                <i class="bi bi-clock-history"></i> Histórico
+            </a>
+
+            <a href="/dashboard" target="_blank" class="btn btn-outline-primary btn-sm" title="Análise Kanban">
+                <i class="bi bi-graph-up"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-light p-2 rounded mb-3 d-flex justify-content-end align-items-center gap-3 border">
+        <span class="fw-bold small text-uppercase text-muted">Filtrar Visualização:</span>
+        <form action="/" method="get" class="d-flex gap-3 m-0">
+            <div class="form-check m-0">
+                <input class="form-check-input" type="checkbox" name="zones" value="2_ALMOXARIFADO" id="z2"
+                       onchange="this.form.submit()"
+                       th:checked="${selectedZones != null && #lists.contains(selectedZones, '2_ALMOXARIFADO')}">
+                <label class="form-check-label small" for="z2">Almoxarifado</label>
+            </div>
+            <div class="form-check m-0">
+                <input class="form-check-input" type="checkbox" name="zones" value="3_CD" id="z3"
+                       onchange="this.form.submit()"
+                       th:checked="${selectedZones != null && #lists.contains(selectedZones, '3_CD')}">
+                <label class="form-check-label small" for="z3">CD / Paletes</label>
+            </div>
+        </form>
+    </div>
+
+    <div class="section-header" onclick="toggleSection('sec-kits', 'icon-kits')">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-boxes"></i>
+            <span class="fs-5 fw-bold">Kits e Conjuntos Principais</span>
+        </div>
+        <i id="icon-kits" class="bi bi-chevron-down"></i>
+    </div>
+
+    <div id="sec-kits">
+        <table class="table table-hover align-middle">
+            <thead class="table-light small text-muted">
+            <tr>
+                <th width="45%">Descrição do Conjunto</th>
+                <th width="15%">Código</th>
+                <th width="10%">Local</th>
+                <th width="30%" class="text-end pe-4">Ação</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${itens}" th:if="${item.isPai}"
+                th:id="'row-' + ${item.id}"
+                th:classappend="${item.status == 'OK'} ? 'status-OK' : ''">
+
+                <td th:text="${item.descricao}" class="fw-bold fs-5 text-dark"></td>
+                <td th:text="${item.codigo}" class="font-monospace text-primary"></td>
+                <td th:text="${item.local}" class="fw-bold text-secondary"></td>
+
+                <td class="text-end">
+                    <div th:id="'kit-msg-'+${item.id}"
+                         th:style="${item.status == 'OK' ? '' : 'display:none'}"
+                         class="text-success fw-bold">
+                        <i class="bi bi-check-circle-fill"></i> SEPARADO
+                    </div>
+
+                    <button th:id="'btn-kit-'+${item.id}"
+                            th:if="${item.status != 'OK'}"
+                            class="btn btn-kit w-100 shadow-sm"
+                            th:onclick="baixarKit([[${item.id}]])">
+                        <i class="bi bi-box-seam"></i> BAIXAR KIT COMPLETO
+                    </button>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(itens.?[isPai])}">
+                <td colspan="4" class="text-center text-muted py-3">Nenhum kit identificado nesta lista.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section-header mt-5" onclick="toggleSection('sec-pecas', 'icon-pecas')">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-tools"></i>
+            <span class="fs-5 fw-bold">Peças e Componentes Soltos</span>
+        </div>
+        <i id="icon-pecas" class="bi bi-chevron-down"></i>
+    </div>
+
+    <div id="sec-pecas">
+        <table class="table table-hover align-middle mb-5">
+            <thead class="table-light small text-muted">
+            <tr>
+                <th width="5%" class="text-center">Zona</th>
+                <th width="40%">Descrição</th>
+                <th width="15%">Código</th>
+                <th width="10%">Local</th>
+                <th width="30%" class="text-end pe-4">Conferência (Solicitado ➔ Realizado)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${itens}" th:if="${!item.isPai}"
+                th:id="'row-' + ${item.id}"
+                th:data-parent-id="${item.parentId}"
+                th:classappend="'status-' + ${item.status}">
+
+                <td class="text-center">
+                    <span th:if="${item.zona == '2_ALMOXARIFADO'}" class="badge badge-almox">ALM</span>
+                    <span th:if="${item.zona == '3_CD'}" class="badge badge-cd">CD</span>
+                </td>
+
+                <td>
+                    <span th:text="${item.descricao}" class="desc-texto fw-bold text-dark"></span>
+                    <div th:if="${item.parentId != null}" class="small text-muted fst-italic">
+                        ↳ Kit: <span th:text="${item.codigoPai}"></span>
+                    </div>
+                </td>
+
+                <td th:text="${item.codigo}" class="font-monospace small"></td>
+
+                <td th:text="${item.local}" class="fw-bold text-secondary"></td>
+
+                <td class="text-end pe-3">
+                    <div class="d-flex justify-content-end align-items-center gap-2">
+
+                        <span class="fw-bold fs-5 text-dark"
+                              th:text="${item.unidade == 'KG' || item.unidade == 'M'} ? ${#numbers.formatDecimal(item.qtdRequerida, 1, 2, 'POINT')} : ${#numbers.formatInteger(item.qtdRequerida, 0)}">
+                        </span>
+                        <small class="text-muted me-2" th:text="${item.unidade}"></small>
+
+                        <input type="number" step="0.01"
+                               th:id="'input-' + ${item.id}"
+                               th:value="${item.qtdSeparada > 0 ? (item.unidade == 'KG' ? item.qtdSeparada : #numbers.formatInteger(item.qtdSeparada,0)) : ''}"
+                               class="form-control input-qtd"
+                               placeholder="-"
+                               th:onchange="salvarDigitacao(this, [[${item.id}]])">
+
+                        <button th:id="'btn-check-' + ${item.id}"
+                                class="btn btn-outline-secondary btn-sm"
+                                style="width: 42px; height: 38px;"
+                                title="Alternar: Completo / Vazio"
+                                th:onclick="toggleCheck([[${item.id}]], [[${item.qtdRequerida}]])">
+
+                            <i class="bi bi-check-lg" th:if="${item.status != 'OK'}"></i>
+                            <i class="bi bi-x-lg" th:if="${item.status == 'OK'}"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<div class="fixed-bottom bg-white border-top p-3 shadow-lg">
+    <div class="container d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fw-bold text-muted">Ações da OP:</span>
+        </div>
+        <form action="/finalizar-op" method="post"
+              onsubmit="return confirm('ATENÇÃO:\n\nIsso salvará os dados no Histórico e encerrará esta lista.\n\nDeseja continuar e visualizar o Relatório de Faltas?');">
+
+            <th:block th:each="z : ${selectedZones}">
+                <input type="hidden" name="zones" th:value="${z}"/>
+            </th:block>
+
+            <button class="btn btn-danger btn-lg shadow">
+                <i class="bi bi-file-earmark-check"></i> Salvar Dados & Gerar Relatório
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // --- FUNÇÃO DE MINIMIZAR SEÇÕES ---
+    function toggleSection(sectionId, iconId) {
+        const section = document.getElementById(sectionId);
+        const icon = document.getElementById(iconId);
+
+        if (section.style.display === 'none') {
+            section.style.display = 'block';
+            icon.classList.remove('bi-chevron-right');
+            icon.classList.add('bi-chevron-down');
+        } else {
+            section.style.display = 'none';
+            icon.classList.remove('bi-chevron-down');
+            icon.classList.add('bi-chevron-right');
+        }
+    }
+
+    // --- 1. DIGITAÇÃO MANUAL ---
+    async function salvarDigitacao(inputElement, id) {
+        let valor = inputElement.value;
+        // Se apagar tudo, considera 0
+        if(valor === "") valor = 0;
+        // Substitui virgula por ponto se necessário
+        valor = String(valor).replace(',', '.');
+
+        await enviarParaBackend(id, valor);
+    }
+
+    // --- 2. BOTÃO CHECK (CORRIGIDO) ---
+    async function toggleCheck(id, qtdTotal) {
+        const row = document.getElementById('row-' + id);
+        const input = document.getElementById('input-' + id);
+
+        // Verifica o estado ATUAL da linha
+        const isCurrentlyOk = row.classList.contains('status-OK');
+
+        let novoValor;
+
+        if (isCurrentlyOk) {
+            // LÓGICA DE ZERAR: Se já estava OK, o clique significa "Desmarcar/Zerar"
+            novoValor = 0;
+            input.value = ""; // Limpa visualmente o input
+        } else {
+            // LÓGICA DE COMPLETAR: Se não estava OK, preenche tudo
+            novoValor = qtdTotal;
+            // Formata se for inteiro ou decimal
+            input.value = (Number.isInteger(qtdTotal)) ? qtdTotal : qtdTotal.toFixed(2);
+        }
+
+        // Envia para o backend processar
+        await enviarParaBackend(id, novoValor);
+    }
+
+    // --- 3. COMUNICAÇÃO COM O SERVIDOR ---
+    async function enviarParaBackend(id, qtd) {
+        const row = document.getElementById('row-' + id);
+        const btnIcon = document.querySelector(`#btn-check-${id} i`);
+
+        // Feedback visual de carregamento
+        row.style.opacity = '0.6';
+
+        try {
+            const formData = new FormData();
+            formData.append('id', id);
+            formData.append('qtd', qtd);
+
+            const response = await fetch('/api/update', { method: 'POST', body: formData });
+
+            if (response.ok) {
+                const data = await response.json();
+
+                // REMOVE TODAS AS CLASSES ANTIGAS PARA EVITAR CONFLITO
+                row.classList.remove('status-PENDENTE', 'status-PARCIAL', 'status-OK');
+
+                // ADICIONA A NOVA CLASSE VINDA DO BACKEND
+                row.classList.add('status-' + data.status);
+
+                // ATUALIZA O ÍCONE DO BOTÃO
+                if (btnIcon) {
+                    if (data.status === 'OK') {
+                        // Se está OK, mostra X (para cancelar)
+                        btnIcon.className = 'bi bi-x-lg';
+                        btnIcon.parentElement.classList.remove('btn-outline-secondary');
+                        btnIcon.parentElement.classList.add('btn-secondary'); // Estilo visual de ativo
+                    } else {
+                        // Se não está OK, mostra Check (para completar)
+                        btnIcon.className = 'bi bi-check-lg';
+                        btnIcon.parentElement.classList.add('btn-outline-secondary');
+                        btnIcon.parentElement.classList.remove('btn-secondary');
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao salvar dados. Verifique a conexão.');
+        } finally {
+            row.style.opacity = '1';
+        }
+    }
+
+    // --- 4. BAIXAR KIT ---
+    async function baixarKit(parentId) {
+        if(!confirm("Tem certeza que encontrou o conjunto completo? Isso marcará todas as peças filhas como encontradas.")) return;
+
+        const btn = document.getElementById('btn-kit-' + parentId);
+
+        try {
+            const formData = new FormData();
+            formData.append('parentId', parentId);
+            const response = await fetch('/api/baixar-kit', { method: 'POST', body: formData });
+
+            if (response.ok) {
+                btn.style.display = 'none';
+                document.getElementById('kit-msg-' + parentId).style.display = 'block';
+
+                // Atualiza visualmente todos os filhos
+                document.querySelectorAll(`tr[data-parent-id='${parentId}']`).forEach(row => {
+                    row.classList.remove('status-PENDENTE', 'status-PARCIAL');
+                    row.classList.add('status-OK');
+
+                    const input = row.querySelector('input');
+                    const spanQtd = row.querySelector('span.fs-5'); // Pega a quantidade do texto
+
+                    if(input && spanQtd) {
+                        input.value = spanQtd.innerText.trim();
+                    }
+
+                    const icon = row.querySelector('button i');
+                    if(icon) icon.className = 'bi bi-x-lg';
+                });
+            }
+        } catch (e) { console.error(e); }
+    }
+</script>
+</body>
+</html>
