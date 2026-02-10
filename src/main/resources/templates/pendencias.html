@@ -1,55 +1,48 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>Controle de Entregas Pendentes</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <style>
-        .op-header {
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .op-header:hover {
-            background-color: #f8f9fa !important;
-        }
-        .accordion-button:not(.collapsed) {
-            background-color: #e7f1ff;
-            color: #0c63e4;
-        }
-    </style>
-</head>
-<body class="bg-light p-4">
-
-<div class="container">
-
-    <div class="d-flex justify-content-between align-items-end mb-4">
-        <div>
-            <h3 class="fw-bold"><i class="bi bi-truck"></i> Controle de Backlog</h3>
-            <span class="text-muted">Gerencie entregas pendentes e pesquise materiais</span>
-        </div>
-        <a href="/" class="btn btn-outline-secondary">Voltar</a>
-    </div>
-
-    <div class="card p-3 mb-4 shadow-sm">
-        <form action="/pendencias" method="get" class="row g-2 align-items-center">
-            <div class="col-auto">
-                <i class="bi bi-search fs-5 text-muted"></i>
+<table class="table table-hover mb-0 align-middle">
+    <thead class="table-light">
+    <tr>
+        <th width="15%">Data</th>
+        <th width="35%">Código / Descrição</th>
+        <th width="15%" class="text-center text-secondary">Original</th>
+        <th width="15%" class="text-center text-success">Encontrado</th>
+        <th width="15%" class="text-danger">Faltante (Entregar)</th>
+        <th width="5%"></th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="p : ${entry.value}">
+        <td class="text-muted small ps-3">
+            <span th:text="${#temporals.format(p.dataAbertura, 'dd/MM HH:mm')}"></span>
+        </td>
+        <td>
+            <div class="fw-bold font-monospace text-dark"
+                 th:classappend="${busca != null && p.codigo.contains(busca)} ? 'bg-warning bg-opacity-25 px-1 rounded'">
+                <span th:text="${p.codigo}"></span>
             </div>
-            <div class="col">
-                <input type="text" name="busca" class="form-control"
-                       placeholder="Digite os últimos 5 números do código..."
-                       th:value="${busca}">
-            </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-primary">Buscar Peça</button>
-            </div>
-            <div class="col-auto" th:if="${busca != null and !busca.isEmpty()}">
-                <a href="/pendencias" class="btn btn-outline-danger">Limpar</a>
-            </div>
-        </form>
-    </div>
+            <small class="text-muted text-uppercase" th:text="${p.descricao}"></small>
+        </td>
 
-    <div th:if="${#maps.isEmpty(pendenciasMap)}" class="alert alert-success text-center p-5 shadow-sm">
-        <i class="bi bi-check-circle-fill display-1 text-success"></i>
-        <h4 class="mt-3">Nenhuma pendência encontrada!</h4>
-        <p class="text-muted">
+        <td class="text-center text-muted">
+            <span th:text="${#numbers.formatDecimal(p.qtdOriginal, 1, 1)}"></span>
+        </td>
+
+        <td class="text-center text-success fw-bold bg-success bg-opacity-10">
+            <span th:text="${#numbers.formatDecimal(p.qtdEncontrada, 1, 1)}"></span>
+        </td>
+
+        <td class="fw-bold text-danger fs-5">
+            <span th:text="${p.quantidade}"></span>
+            <small class="text-secondary" style="font-size: 0.6em;" th:text="${p.unidade}"></small>
+        </td>
+
+        <td class="text-end pe-3">
+            <form action="/pendencias/entregar" method="post">
+                <input type="hidden" name="id" th:value="${p.id}">
+                <button class="btn btn-sm btn-outline-success" title="Dar Baixa">
+                    <i class="bi bi-check-lg"></i>
+                </button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+</table>

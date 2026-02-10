@@ -12,28 +12,37 @@ public class Pendencia {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String op;          // Para saber para onde encaminhar
+    private String op;
     private String codigo;
     private String descricao;
-    private Double quantidade;
     private String unidade;
 
-    private LocalDateTime dataAbertura; // Quando foi detectada a falta
-    private LocalDateTime dataEntrega;  // Quando foi resolvido
+    // O QUE FALTOU (Saldo Devedor) - É o que precisa ser entregue
+    private Double quantidade;
 
-    private String status; // "ABERTO" ou "ENTREGUE"
+    // NOVO CAMPO: O que foi pedido originalmente na lista
+    private Double qtdOriginal;
 
-    // Campo calculado: Tempo em horas/minutos que levou
+    private LocalDateTime dataAbertura;
+    private LocalDateTime dataEntrega;
+    private String status; // "ABERTO", "ENTREGUE"
     private String tempoEspera;
 
     public void registrarEntrega() {
         this.dataEntrega = LocalDateTime.now();
         this.status = "ENTREGUE";
 
-        // Lógica do tempo decorrido
         Duration duracao = Duration.between(dataAbertura, dataEntrega);
         long dias = duracao.toDays();
         long horas = duracao.toHours() % 24;
         this.tempoEspera = String.format("%d dias e %d horas", dias, horas);
+    }
+
+    // Método auxiliar para mostrar quanto foi encontrado antes de gerar a falta
+    public Double getQtdEncontrada() {
+        if (qtdOriginal == null) return 0.0;
+        if (quantidade == null) return 0.0;
+        double encontrada = qtdOriginal - quantidade;
+        return (encontrada < 0) ? 0.0 : encontrada;
     }
 }
