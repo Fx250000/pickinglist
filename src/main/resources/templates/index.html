@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Office Green | Picking Operacional</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <h1><span style="color:var(--accent-color);">■</span> Picking List Operacional</h1>
+        <div class="op-badge" th:if="${opId != '---'}">
+            OP: <span th:text="${opId}">#0000</span>
+        </div>
+    </div>
+
+    <div class="actions">
+        <form th:action="@{/upload}" method="post" enctype="multipart/form-data" class="upload-form">
+            <label for="fileUpload" class="btn btn-secondary" style="cursor: pointer;">
+                📂 Carregar Excel
+            </label>
+            <input type="file" id="fileUpload" name="file" accept=".xlsx, .xls" style="display: none;" onchange="this.form.submit()">
+        </form>
+
+        <button id="btnGenerateReport" class="btn btn-secondary">Visualizar Backlog</button>
+        <button id="btnFinalizeOP" class="btn btn-primary">Finalizar OP</button>
+        <a th:href="@{/}" class="btn btn-danger" style="margin-left: 10px;">Limpar</a>
+    </div>
+</header>
+
+<main class="container">
+
+    <div class="card filter-bar">
+        <form th:action="@{/}" method="get" id="filterForm" class="filter-form">
+            <span class="filter-label">Filtrar Zonas:</span>
+
+            <label class="checkbox-container">
+                <input type="checkbox" name="zones" value="2ALMOXARIFADO"
+                       th:checked="${selectedZones != null and selectedZones.contains('2ALMOXARIFADO')}"
+                       onchange="document.getElementById('filterForm').submit()">
+                <span class="checkmark"></span>
+                Almoxarifado
+            </label>
+
+            <label class="checkbox-container">
+                <input type="checkbox" name="zones" value="3CD"
+                       th:checked="${selectedZones != null and selectedZones.contains('3CD')}"
+                       onchange="document.getElementById('filterForm').submit()">
+                <span class="checkmark"></span>
+                Expedição (CD)
+            </label>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                <tr>
+                    <th class="col-id">ID</th>
+                    <th>Produto / Descrição</th>
+                    <th class="col-zone">Zona</th> <th class="col-qty">Solicitado</th>
+                    <th class="col-qty">Encontrado</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${pickingList}"
+                    th:attr="data-id=${item.id}"
+                    class="picking-row">
+
+                    <td th:text="${item.id}">101</td>
+                    <td>
+                        <div class="product-code" th:text="${item.codigo}">00.000.000</div>
+                        <div class="product-desc" th:text="${item.nome}">Descrição do Produto</div>
+                    </td>
+
+                    <td>
+                                <span class="badge"
+                                      th:classappend="${item.zona == '2ALMOXARIFADO' ? 'badge-blue' : 'badge-orange'}"
+                                      th:text="${item.zona == '2ALMOXARIFADO' ? 'ALM' : 'CD'}">
+                                </span>
+                    </td>
+
+                    <td class="qty-requested" th:text="${item.qtdSolicitada}">10</td>
+
+                    <td>
+                        <input type="number"
+                               class="input-qty"
+                               min="0"
+                               step="0.01"
+                               th:max="${item.qtdSolicitada}"
+                               placeholder="0">
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(pickingList)}">
+                    <td colspan="5" style="text-align: center; padding: 30px; color: #7f8c8d;">
+                        Nenhum item carregado. Utilize o botão "Carregar Excel" acima.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<script th:src="@{/js/main.js}"></script>
+<script th:src="@{/js/picking-mode.js}"></script>
+</body>
+</html>

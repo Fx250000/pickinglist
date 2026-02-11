@@ -1,23 +1,14 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Backlog de Entregas</title>
+    <title>Backlog de Entregas | Office Green</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <style>
-        .accordion-button:not(.collapsed) {
-            background-color: #ffe6e6;
-            color: #b02a37;
-        }
-        .accordion-button::after {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23b02a37'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
-        }
-        .col-numero { font-family: Consolas, monospace; font-weight: bold; }
-        .flash-message { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-    </style>
+
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body class="bg-light p-4">
-<!-- Flash Messages -->
+
 <div th:if="${message}" class="alert alert-success flash-message" role="alert" th:text="${message}"></div>
 
 <div class="container">
@@ -28,13 +19,13 @@
             </h3>
             <span class="text-muted">Gestão de materiais pendentes de entrega</span>
         </div>
-        <a href="/" class="btn btn-outline-secondary">
+        <a th:href="@{/picking}" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left"></i> Voltar ao Picking
         </a>
     </div>
 
     <div class="card p-3 mb-4 border-0 shadow-sm">
-        <form action="/pendencias" method="get" class="d-flex gap-2">
+        <form th:action="@{/pendencias}" method="get" class="d-flex gap-2">
             <input type="text" name="busca" class="form-control"
                    th:value="${busca}" placeholder="Pesquisar código da peça...">
             <button type="submit" class="btn btn-primary px-4">
@@ -44,14 +35,12 @@
         </form>
     </div>
 
-    <!-- Empty State -->
     <div th:if="${pendenciasMap?.isEmpty()}" class="alert alert-success text-center py-5 shadow-sm">
         <i class="bi bi-check-circle-fill display-1 mb-3 text-success"></i>
         <h4 class="alert-heading">Tudo em dia!</h4>
         <p>Não há pendências no backlog no momento.</p>
     </div>
 
-    <!-- Accordion by OP -->
     <div th:if="${!pendenciasMap?.isEmpty()}" class="accordion shadow-sm" id="accordionBacklog">
         <div th:each="entry : ${pendenciasMap}" class="accordion-item">
             <h2 class="accordion-header" th:id="'heading-' + ${#strings.replace(entry.key, ' ', '')}">
@@ -59,12 +48,11 @@
                         th:data-bs-target="'#collapse-' + ${#strings.replace(entry.key, ' ', '')}"
                         data-bs-toggle="collapse">
                     <div class="d-flex align-items-center gap-3 w-100">
-                            <span class="badge bg-danger rounded-pill"
-                                  th:text="${#lists.size(entry.value)} + ' Itens'"></span>
+                        <span class="badge bg-danger rounded-pill"
+                              th:text="${#lists.size(entry.value)} + ' Itens'"></span>
                         <span class="fw-bold fs-5">OP <span th:text="${entry.key}"></span></span>
                     </div>
-                    <form action="/pendencias/excluir-op" method="post" class="px-3 border-start"
-                          onsubmit="return confirm('ATENÇÃO: remover esta OP inteira do Backlog. Apenas se foi um erro de operação. Exclusão?')">
+                    <form th:action="@{/pendencias/excluir-op}" method="post" class="px-3 border-start confirm-delete">
                         <input type="hidden" name="op" th:value="${entry.key}">
                         <button class="btn btn-sm btn-outline-danger" title="Excluir OP da Lista">
                             <i class="bi bi-trash"></i>
@@ -78,7 +66,6 @@
                  data-bs-parent="#accordionBacklog">
                 <div class="accordion-body p-0">
                     <table class="table table-striped mb-0 align-middle">
-                        <!-- UPDATED HEADERS -->
                         <thead class="table-light small text-uppercase">
                         <tr>
                             <th class="ps-4">Data</th>
@@ -92,24 +79,22 @@
                         </thead>
                         <tbody>
                         <tr th:each="p : ${entry.value}">
-                            <!-- UPDATED CELLS -->
                             <td class="ps-4 text-muted small"
                                 th:text="${#temporals.format(p.dataAbertura, 'dd/MM HH:mm')}"></td>
                             <td>
-                                <div class="fw-bold text-dark font-monospace" th:text="${p.codigo}"></div>
+                                <div class="codigo-font text-dark" th:text="${p.codigo}"></div>
                                 <small class="text-muted" th:text="${p.descricao}"></small>
                             </td>
                             <td class="text-center col-numero"
                                 th:text="${#numbers.formatDecimal(p.qtdOriginal, 1, 1)}"></td>
-                            <td class="text-center text-success col-numero bg-success bg-opacity-10"
+                            <td class="text-center col-numero text-success bg-success bg-opacity-10"
                                 th:text="${#numbers.formatDecimal(p.qtdSeparada, 1, 1)}"></td>
-                            <td class="text-center text-primary col-numero bg-primary bg-opacity-10"
+                            <td class="text-center col-numero text-primary bg-primary bg-opacity-10"
                                 th:text="${#numbers.formatDecimal(p.qtdEntregada, 1, 1)}"></td>
-                            <td class="text-center text-danger col-numero fw-bold bg-danger bg-opacity-10"
+                            <td class="text-center col-numero text-danger fw-bold bg-danger bg-opacity-10"
                                 th:text="${#numbers.formatDecimal(p.getQtdFaltante(), 1, 1)}"></td>
-                            <!-- UPDATED ACTION FORM -->
                             <td class="text-end pe-4">
-                                <form action="/pendencias/entregar" method="post" class="d-inline">
+                                <form th:action="@{/pendencias/entregar}" method="post" class="d-inline">
                                     <input type="hidden" name="id" th:value="${p.id}">
                                     <div class="input-group input-group-sm" style="width: 140px;">
                                         <input type="number"
@@ -135,7 +120,6 @@
         </div>
     </div>
 
-    <!-- Recent Deliveries -->
     <div class="mt-5 pt-3 border-top">
         <h5 class="text-muted">
             <i class="bi bi-clock-history"></i> Entregas Recentes
@@ -162,13 +146,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- Auto-hide flash message -->
-<script>
-    setTimeout(() => {
-        const alert = document.querySelector('.flash-message');
-        if (alert) alert.remove();
-    }, 5000);
-</script>
+<script th:src="@{/js/main.js}"></script>
 </body>
 </html>

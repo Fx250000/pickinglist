@@ -1,0 +1,238 @@
+/* =========================================
+   1. VARIABLES & RESET
+   ========================================= */
+:root {
+    --primary-color: #2c3e50;
+    --accent-color: #27ae60;
+    --accent-hover: #219150;
+    --danger-color: #e74c3c;
+    --danger-bg: #ffe6e6; /* Added from pendencias */
+    --warning-color: #f1c40f;
+    --light-bg: #f4f6f9;
+    --white: #ffffff;
+    --text-dark: #333333;
+    --border-color: #dee2e6;
+    --shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background-color: var(--light-bg);
+    color: var(--text-dark);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+/* =========================================
+   2. UTILITIES & TYPOGRAPHY
+   ========================================= */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.text-muted { color: #6c757d !important; }
+.fw-bold { font-weight: 700 !important; }
+.text-danger { color: var(--danger-color) !important; }
+.text-success { color: var(--accent-color) !important; }
+
+/* Monospace font for codes (From producao.html) */
+.codigo-font, .col-numero {
+    font-family: 'Courier New', Consolas, monospace;
+    font-weight: bold;
+}
+
+/* Highlighting missing items (From producao.html) */
+.pendencia-destaque {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--danger-color);
+}
+
+/* =========================================
+   3. COMPONENTS: CARDS & ALERTS
+   ========================================= */
+.card {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.card-header {
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--primary-color);
+}
+
+/* Flash Messages (From pendencias.html) */
+.flash-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    padding: 15px 20px;
+    border-radius: 4px;
+    background-color: #d1e7dd;
+    color: #0f5132;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* =========================================
+   4. LAYOUTS (Dashboard & Forms)
+   ========================================= */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.centered-layout {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: var(--primary-color);
+}
+
+header {
+    background-color: var(--white);
+    border-bottom: 1px solid var(--border-color);
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* =========================================
+   5. TABLES
+   ========================================= */
+.table-responsive { overflow-x: auto; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white);
+    margin-bottom: 1rem;
+}
+
+thead {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+.picking-row { transition: all 0.3s ease; }
+.row-complete { background-color: #d4edda !important; color: #155724; }
+
+/* =========================================
+   6. BOOTSTRAP OVERRIDES (For pendencias.html)
+   ========================================= */
+/* Custom styling for the Backlog Accordion */
+.accordion-button:not(.collapsed) {
+    background-color: var(--danger-bg);
+    color: #b02a37;
+    font-weight: bold;
+}
+
+/* =========================================
+   7. PRINT STYLES (From producao.html)
+   ========================================= */
+@media print {
+    .no-print, header, .actions, .btn {
+        display: none !important;
+    }
+    body {
+        padding: 0;
+        background-color: white;
+        font-size: 12pt;
+    }
+    .container, .card {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    table {
+        border: 1px solid #000 !important;
+    }
+    th, td {
+        border: 1px solid #000 !important;
+    }
+    /* --- FILTERS & BADGES --- */
+    .filter-bar {
+        padding: 15px;
+        display: flex;
+        align-items: center;
+        background-color: #f8f9fa;
+        margin-bottom: 20px;
+    }
+
+    .filter-form {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+
+    .filter-label {
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    /* Product Code Styling */
+    .product-code {
+        font-weight: bold;
+        color: var(--primary-color);
+        font-family: 'Consolas', monospace;
+    }
+    .product-desc {
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    /* Zone Badges */
+    .badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        color: white;
+    }
+    .badge-blue { background-color: #3498db; }
+    .badge-orange { background-color: #e67e22; }
+
+    /* Upload Form Alignment */
+    .upload-form {
+        display: inline-block;
+        margin: 0;
+    }
+}
